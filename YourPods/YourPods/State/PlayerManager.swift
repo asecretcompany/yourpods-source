@@ -739,9 +739,60 @@ final class PlayerManager {
     func moveQueueItems(from source: IndexSet, to destination: Int) {
         audioManager.moveQueueItems(from: source, to: destination)
     }
+
+    /// Play an existing QueueItem selected by the user.
+    ///
+    /// A stale queue item can still carry its last position after the corresponding
+    /// Episode has been marked played. Treat explicit selection as a relisten:
+    /// clear completion through the normal sync path and restart from the beginning.
+    func playQueueItem(_ queueItem: QueueItem, position: TimeInterval? = nil) {
+        var item = queueItem
+        let wasPlayed = item.isPlayed || podcastManager?.isEpisodePlayed(
+            podcastUrl: item.podcastUrl,
+            guid: item.id
+        ) == true
+
+        if wasPlayed {
+            podcastManager?.markEpisodeAsUnplayed(
+                podcastUrl: item.podcastUrl,
+                episodeGuid: item.id
+            )
+            item.isPlayed = false
+        }
+
+        // No explicit position means ordinary replay/resume semantics:
+        // completed -> 0, unfinished -> saved position. An explicit position is
+        // deliberate user intent (e.g. "Play from 12:34" on a shared episode),
+        // so preserve it while still clearing completed state.
+        let initialPosition = position ?? TimeInterval(wasPlayed ? 0 : item.positionSeconds)
+        item.positionSeconds = Int(initialPosition)
+
+        Task {
+            await audioManager.playEpisode(
+                item,
+                initialPosition: initialPosition,
+                preserveCurrent: true
+            )
+        }
+    }
     
+    /// Play an Episode selected by the user.
+    ///
+    /// Explicitly selecting a completed episode always means "relisten": clear the
+    /// completed state through the normal sync path and restart from zero. This rule
+    /// lives here so every Episode-based surface (library, search results, Siri,
+    /// deeplinks, CarPlay, etc.) gets identical behavior.
     func playEpisode(_ episode: Episode, position: TimeInterval? = nil) {
+        let wasPlayed = episode.isPlayed
+        if wasPlayed, let podcastUrl = episode.podcastUrl {
+            podcastManager?.markEpisodeAsUnplayed(
+                podcastUrl: podcastUrl,
+                episodeGuid: episode.guid
+            )
+        }
+
         guard var item = QueueItem.from(episode: episode) else { return }
+        let initialPosition: TimeInterval? = wasPlayed ? 0 : position
         
         // Mark interacted so episode is removed from Recently Updated
         podcastManager?.markEpisodeAsInteracted(item.podcastUrl, item.id)
@@ -767,7 +818,7 @@ final class PlayerManager {
         audioManager.previousTrackAction = settingsManager?.previousTrackAction ?? .skipBack
         
         Task {
-            await audioManager.playEpisode(item, initialPosition: position, preserveCurrent: true)
+            await audioManager.playEpisode(item, initialPosition: initialPosition, preserveCurrent: true)
         }
     }
     

@@ -285,23 +285,11 @@ struct QueueView: View {
         QueueItemRow(item: item)
             .contentShape(Rectangle())
             .onTapGesture {
-                Task {
-                    await playerManager.audioManager.playEpisode(
-                        item,
-                        initialPosition: TimeInterval(item.positionSeconds),
-                        preserveCurrent: true
-                    )
-                }
+                playerManager.playQueueItem(item)
             }
             .contextMenu {
                 Button {
-                    Task {
-                        await playerManager.audioManager.playEpisode(
-                            item,
-                            initialPosition: TimeInterval(item.positionSeconds),
-                            preserveCurrent: true
-                        )
-                    }
+                    playerManager.playQueueItem(item)
                 } label: {
                     Label("Play", systemImage: "play.fill")
                 }
@@ -348,13 +336,7 @@ struct QueueView: View {
             }
             // MARK: VoiceOver - Queue Items
             .accessibilityAction(named: "Play") {
-                Task {
-                    await playerManager.audioManager.playEpisode(
-                        item,
-                        initialPosition: TimeInterval(item.positionSeconds),
-                        preserveCurrent: true
-                    )
-                }
+                playerManager.playQueueItem(item)
             }
             .accessibilityAction(named: "Play Next") {
                 playerManager.audioManager.moveToTop(item)

@@ -129,7 +129,7 @@ struct ContentView: View {
         }
         // ── Deep-link share presentation ──
         .sheet(item: $nav.pendingSharedEpisode) { shared in
-            SharedEpisodePreviewSheet(shared: shared, audioManager: audioManager, podcastManager: podcastManager)
+            SharedEpisodePreviewSheet(shared: shared, playerManager: playerManager, podcastManager: podcastManager)
         }
         .sheet(item: $nav.pendingSharedPodcast) { shared in
             SharedPodcastPreviewSheet(shared: shared, podcastManager: podcastManager)

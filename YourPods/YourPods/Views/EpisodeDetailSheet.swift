@@ -380,12 +380,9 @@ struct EpisodeDetailSheet: View {
         return VStack(spacing: 12) {
             // Primary play button
             if episode.isPlayed {
-                // Replay: reset progress and play from start
+                // PlayerManager treats explicit playback of a completed episode as relisten.
                 Button {
-                    if let podcastUrl = episode.podcastUrl {
-                        podcastManager.markEpisodeAsUnplayed(podcastUrl: podcastUrl, episodeGuid: episode.guid)
-                    }
-                    playerManager.playEpisode(episode, position: 0)
+                    playerManager.playEpisode(episode)
                     dismiss()
                 } label: {
                     Label("Replay Episode", systemImage: "arrow.counterclockwise")

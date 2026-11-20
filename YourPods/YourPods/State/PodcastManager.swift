@@ -1698,6 +1698,19 @@ final class PodcastManager {
         }
         return episode.isPlayed
     }
+
+    /// Checks played state for one exact podcast/episode pair.
+    /// Use this for user-initiated playback where GUID collisions across feeds must not
+    /// make an unrelated episode look completed.
+    func isEpisodePlayed(podcastUrl: String, guid: String) -> Bool {
+        let descriptor = FetchDescriptor<Episode>(
+            predicate: #Predicate { $0.guid == guid && $0.podcast?.url == podcastUrl }
+        )
+        guard let episode = try? modelContext.fetch(descriptor).first else {
+            return false
+        }
+        return episode.isPlayed
+    }
     
     // MARK: - Auto-Queue Candidates
     

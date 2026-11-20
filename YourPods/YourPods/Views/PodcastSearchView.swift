@@ -741,9 +741,7 @@ private struct PodcastPreviewSheet: View {
     
     private func streamEpisode(_ episode: PreviewEpisode, audioUrl: String) {
         let tempItem = makeQueueItem(from: episode, audioUrl: audioUrl)
-        Task {
-            await playerManager.audioManager.playEpisode(tempItem, preserveCurrent: true)
-        }
+        playerManager.playQueueItem(tempItem)
     }
     
     private func addToQueue(_ episode: PreviewEpisode, audioUrl: String, playNext: Bool) {

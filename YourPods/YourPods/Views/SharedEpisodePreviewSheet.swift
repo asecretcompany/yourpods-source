@@ -10,7 +10,7 @@ import SwiftUI
 /// "Add to Queue" everywhere, so this sheet no longer disagrees with it.
 struct SharedEpisodePreviewSheet: View {
     let shared: SharedEpisode
-    let audioManager: AudioManager
+    let playerManager: PlayerManager
     let podcastManager: PodcastManager
     @Environment(\.dismiss) private var dismiss
     @State private var isFollowing = false
@@ -48,7 +48,7 @@ struct SharedEpisodePreviewSheet: View {
                         }
 
                         Button {
-                            audioManager.appendToQueue([shared.toQueueItem()])
+                            playerManager.audioManager.appendToQueue([shared.toQueueItem()])
                             dismiss()
                         } label: {
                             Label("Add to Queue", systemImage: "text.append").frame(maxWidth: .infinity)
@@ -82,10 +82,11 @@ struct SharedEpisodePreviewSheet: View {
     }
 
     private func play(from seconds: Int) {
-        Task { @MainActor in
-            await audioManager.playEpisode(shared.toQueueItem(positionSeconds: seconds), initialPosition: TimeInterval(seconds))
-            dismiss()
-        }
+        playerManager.playQueueItem(
+            shared.toQueueItem(positionSeconds: seconds),
+            position: TimeInterval(seconds)
+        )
+        dismiss()
     }
 
     private func follow() async {
